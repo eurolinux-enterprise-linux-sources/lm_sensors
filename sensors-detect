@@ -23,7 +23,7 @@
 require 5.004;
 
 use strict;
-use Fcntl;
+use Fcntl qw(:DEFAULT :seek);
 use File::Basename;
 
 # We will call modprobe, which typically lives in either /sbin,
@@ -1882,7 +1882,7 @@ use vars qw(@cpu_ids);
 		driver => "to-be-written",
 		detect => \&fam11h_pci_detect,
 	}, {
-		name => "Intel Core family thermal sensor",
+		name => "Intel digital thermal sensor",
 		driver => "coretemp",
 		detect => \&coretemp_detect,
 	}, {
@@ -2137,15 +2137,20 @@ sub initialize_cpu_list
 {
 	local $_;
 	my $entry;
+	my $p;
+	my @props = ("vendor_id", "cpu family", "model", "model name", "stepping", "cpuid level");
+	my $props_regexp = join("|", @props);
 
 	open(local *INPUTFILE, "/proc/cpuinfo") or die "Can't access /proc/cpuinfo!";
 	while (<INPUTFILE>) {
 		if (m/^processor\s*:\s*(\d+)/) {
 			push @cpu, $entry if scalar keys(%{$entry}); # Previous entry
-			$entry = {}; # New entry
+			$entry = { nr => $1 }; # New entry
+			# set default values for keys
+			foreach $p (@props) { $entry->{$p} = ''; }
 			next;
 		}
-		if (m/^(vendor_id|cpu family|model|model name|stepping)\s*:\s*(.+)$/) {
+		if (m/^($props_regexp)\s*:\s*(.+)$/) {
 			my $k = $1;
 			my $v = $2;
 			$v =~ s/\s+/ /g;	# Merge multiple spaces
@@ -2312,6 +2317,15 @@ sub load_module
 	my $normalized = $module;
 	$normalized =~ tr/-/_/;
 	$modules_list{$normalized} = 1;
+}
+
+# udev may take some time to create device nodes when loading modules
+sub udev_settle
+{
+	if (!(-x "/sbin/udevadm" && system("/sbin/udevadm settle") == 0)
+	 && !(-x "/sbin/udevsettle" && system("/sbin/udevsettle") == 0)) {
+		sleep(1);
+	}
 }
 
 sub initialize_modules_supported
@@ -3170,14 +3184,14 @@ sub scan_i2c_adapter
 	       "Do you want to scan it? (\%s/selectively): ",
 	       $default ? "YES/no" : "yes/NO";
 
-	$input = <STDIN>;
-	if ($input =~ /^\s*n/i
-	 || (!$default && $input !~ /^\s*[ys]/i)) {
+	$_ = <STDIN>;
+	print "\n" if !$_;
+	if (($_ && (m/^\s*n/i || ! m/^\s*[ys]/i)) || !$default) {
 		print "\n";
 		return;
 	}
 
-	if ($input =~ /^\s*s/i) {
+	if ($_ && m/^\s*s/i) {
 		print "Please enter one or more addresses not to scan. Separate them with commas.\n",
 		      "You can specify a range by using dashes. Example: 0x58-0x5f,0x69.\n",
 		      "Addresses: ";
@@ -5349,20 +5363,33 @@ sub intel_amb_detect
 	return;
 }
 
+sub cpuid
+{
+	my ($cpu_nr, $eax) = @_;
+
+	sysopen(CPUID, "/dev/cpu/$cpu_nr/cpuid", O_RDONLY) or return;
+	binmode CPUID;
+	sysseek(CPUID, $eax, SEEK_SET)
+		or die "Cannot seek /dev/cpu/$cpu_nr/cpuid";
+	sysread(CPUID, my $data, 16)
+		or die "Cannot read /dev/cpu/$cpu_nr/cpuid";
+	close CPUID;
+
+	return unpack("L4", $data);
+}
+
 sub coretemp_detect
 {
 	my $probecpu;
+
 	foreach $probecpu (@cpu) {
-		if ($probecpu->{vendor_id} eq 'GenuineIntel' &&
-				$probecpu->{'cpu family'} == 6 &&
-				($probecpu->{model} == 14 ||	# Pentium M DC
-				 $probecpu->{model} == 15 ||	# Core 2 DC 65nm
-				 $probecpu->{model} == 0x16 ||	# Core 2 SC 65nm
-				 $probecpu->{model} == 0x17 ||	# Penryn 45nm
-				 $probecpu->{model} == 0x1a ||	# Nehalem
-				 $probecpu->{model} == 0x1c)) {	# Atom
-			return 9;
-		}
+		next unless $probecpu->{vendor_id} eq 'GenuineIntel' &&
+			    $probecpu->{'cpuid level'} >= 6;
+
+		# Now we check for the DTS flag
+		my @regs = cpuid($probecpu->{nr}, 6);
+		return unless @regs == 4;
+		return 9 if ($regs[0] & (1 << 0));	# eax, bit 0
 	}
 	return;
 }
@@ -5561,7 +5588,8 @@ sub write_config
 		       (-e '/etc/modprobe.d/lm_sensors.conf' ? 'overwrite' : 'generate'),
 		       ($have_modprobe_d ? 'YES/no' : 'yes/NO');
 		$_ = <STDIN>;
-		if (($have_modprobe_d and not m/^\s*n/i) or m/^\s*y/i) {
+		print "\n" if !$_;
+		if (($_ && m/^\s*y/i) || ($have_modprobe_d && !($_ && m/^\s*n/i))) {
 			unless ($have_modprobe_d) {
 				mkdir('/etc/modprobe.d', 0777)
 					or die "Sorry, can't create /etc/modprobe.d ($!)";
@@ -5585,7 +5613,8 @@ sub write_config
 	       (-e '/etc/sysconfig/lm_sensors' ? 'overwrite' : 'generate'),
 	       ($have_sysconfig ? 'YES/no' : 'yes/NO');
 	$_ = <STDIN>;
-	if (($have_sysconfig and not m/^\s*n/i) or m/^\s*y/i) {
+	print "\n" if !$_;
+	if (($_ && m/^\s*y/i) || ($have_sysconfig && !($_ && m/^\s*n/i))) {
 		unless ($have_sysconfig) {
 			mkdir('/etc/sysconfig', 0777)
 				or die "Sorry, can't create /etc/sysconfig ($!)";
@@ -5619,10 +5648,6 @@ EOT
 			$i++;
 		}
 		close(SYSCONFIG);
-
-		print "Copy prog/init/lm_sensors.init to /etc/init.d/lm_sensors\n".
-		      "for initialization at boot time.\n"
-			unless -f "/etc/init.d/lm_sensors";
 
 		if (-x "/sbin/insserv" && -f "/etc/init.d/lm_sensors") {
 			system("/sbin/insserv", "/etc/init.d/lm_sensors");
@@ -5701,7 +5726,15 @@ sub main
 
 	print "Some south bridges, CPUs or memory controllers contain embedded sensors.\n".
 	      "Do you want to scan for them? This is totally safe. (YES/no): ";
-	unless (<STDIN> =~ /^\s*n/i) {
+	$_ = <STDIN>;
+	print "\n" if !$_;
+	unless ($_ && /^\s*n/i) {
+		# Load the cpuid driver if needed
+		unless (-e "/dev/cpu/$cpu[0]->{nr}/cpuid") {
+			load_module("cpuid");
+			udev_settle();
+		}
+
 		$| = 1;
 		foreach my $entry (@cpu_ids) {
 			scan_cpu($entry);
@@ -5717,7 +5750,9 @@ sub main
 		print "Some Super I/O chips contain embedded sensors. We have to write to\n".
 		      "standard I/O ports to probe them. This is usually safe.\n";
 		print "Do you want to scan for Super I/O sensors? (YES/no): ";
-		unless (<STDIN> =~ /^\s*n/i) {
+		$_ = <STDIN>;
+		print "\n" if !$_;
+		unless ($_ && /^\s*n/i) {
 			initialize_ioports();
 			$superio_features |= scan_superio(0x2e, 0x2f);
 			$superio_features |= scan_superio(0x4e, 0x4f);
@@ -5732,7 +5767,9 @@ sub main
 			      "there, we have to read from arbitrary I/O ports to probe for such\n".
 			      "interfaces. This is normally safe. Do you want to scan for IPMI\n".
 			      "interfaces? (YES/no): ";
-			unless (<STDIN> =~ /^\s*n/i) {
+			$_ = <STDIN>;
+			print "\n" if !$_;
+			unless ($_ && /^\s*n/i) {
 				if (!ipmi_from_smbios()) {
 					initialize_ioports();
 					scan_isa_bus(\@ipmi_ifs);
@@ -5747,9 +5784,9 @@ sub main
 		       "safe though. Yes, you do have ISA I/O ports even if you do not have any\n".
 		       "ISA slots! Do you want to scan the ISA I/O ports? (\%s): ",
 		       $superio_features ? "yes/NO" : "YES/no";
-		$input = <STDIN>;
-		unless ($input =~ /^\s*n/i
-		     || ($superio_features && $input !~ /^\s*y/i)) {
+		$_ = <STDIN>;
+		print "\n" if !$_;
+		unless (($_ && (m/^\s*n/i || $_ && ! m/^\s*y/i)) || $superio_features) {
 			initialize_ioports();
 			scan_isa_bus(\@chip_ids);
 			close_ioports();
@@ -5763,7 +5800,9 @@ sub main
 	      "on some systems.\n".
 	      "Do you want to probe the I2C/SMBus adapters now? (YES/no): ";
 
-	unless (<STDIN> =~ /^\s*n/i) {
+	$_ = <STDIN>;
+	print "\n" if !$_;
+	unless ($_ && /^\s*n/i) {
 		adapter_pci_detection();
 		load_module("i2c-dev") unless -e "$sysfs_root/class/i2c-dev";
 		initialize_i2c_adapters_list();
@@ -5777,6 +5816,7 @@ sub main
 		$by_default = 1 if dmi_match('board_vendor', 'asustek', 'tyan',
 					     'supermicro');
 
+		udev_settle();
 		for (my $dev_nr = 0; $dev_nr < @i2c_adapters; $dev_nr++) {
 			next unless exists $i2c_adapters[$dev_nr];
 			scan_i2c_adapter($dev_nr, $by_default);

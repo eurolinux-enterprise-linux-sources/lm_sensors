@@ -1,0 +1,18 @@
+sensors-detect must be run first to find any supported sensors on
+system before using any init script or other executable files coming
+with lm_sensors packages.
+
+There are 2 init scripts for lm_sensors packages:
+ - lm_sensors   - packaged by lm_sensors
+ - sensord      - packaged by lm_sensors-sensord
+
+Only one of them may be used at any given time.
+
+sensord init script launches a daemon monitoring and logging
+configured sensors. For further details see sensord(8) man page.
+Note that lm_sensors-sensord rpm package must be installed first.
+
+lm_sensors init script loads required kernel modules and sets
+properties of configured sensors. Properties are set with this command:
+ # sensors -s
+For further informations see sensors(1), sensors.conf(5).

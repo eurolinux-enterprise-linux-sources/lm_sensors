@@ -1,6 +1,6 @@
 Name: lm_sensors
 Version: 3.1.1
-Release: 10%{?dist}
+Release: 17%{?dist}
 URL: http://www.lm-sensors.org/
 Source: http://dl.lm-sensors.org/lm-sensors/releases/%{name}-%{version}.tar.bz2
 Source1: lm_sensors.sysconfig
@@ -8,6 +8,7 @@ Source1: lm_sensors.sysconfig
 Source2: sensord.sysconfig
 Source3: sensord.init
 Source4: sensors-detect
+Source5: lm_sensors-README.redhat
 Summary: Hardware monitoring tools
 Group: Applications/System
 License: GPLv2+
@@ -18,40 +19,41 @@ Requires: /usr/sbin/dmidecode
 Requires(preun): chkconfig
 Requires(post): chkconfig
 Requires(post): /sbin/ldconfig
+Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 BuildRequires: kernel-headers >= 2.2.16, bison, libsysfs-devel, flex, gawk
 BuildRequires: rrdtool-devel
 
 %description
-The lm_sensors package includes a collection of modules for general SMBus
+This package includes a collection of modules for general SMBus
 access and hardware monitoring.
 
 
 %package libs
-Summary: Lm_sensors core libraries
+Summary: Linux hardware monitoring core libraries
 Group: System Environment/Libraries
 
 %description libs
-Core libraries for lm_sensors applications
+Core libraries for Linux hardware monitoring applications.
 
 
 %package devel
-Summary: Development files for programs which will use lm_sensors
+Summary: Development files for sensors development
 Group: Development/System
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 
 %description devel
-The lm_sensors-devel package includes a header files and libraries for use
+This package includes a header files and libraries for use
 when building applications that make use of sensor data.
 
 
 %package sensord
 Summary: Daemon that periodically logs sensor readings
 Group: System Environment/Daemons
-Requires: %{name} = %{version}-%{release}
+Requires: %{name}%{?_isa} = %{version}-%{release}
 
 %description sensord
-Daemon that periodically logs sensor readings to syslog or a round-robin
-database, and warns of sensor alarms.
+Daemon that periodically logs sensor readings to system log daemon
+or a round-robin database, and warns of sensor alarms.
 
 
 %prep
@@ -73,6 +75,12 @@ make PREFIX=%{_prefix} LIBDIR=%{_libdir} MANDIR=%{_mandir} PROG_EXTRA=sensord \
 rm $RPM_BUILD_ROOT%{_libdir}/libsensors.a
 
 ln -s sensors.conf.5.gz $RPM_BUILD_ROOT%{_mandir}/man5/sensors3.conf.5.gz
+install -d -m 0755 $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-%{version}
+cp -r CHANGES CONTRIBUTORS COPYING doc README* \
+    prog/init/fancontrol.init prog/init/README.initscripts \
+    $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-%{version}
+install -m 0644 %{SOURCE5} \
+    $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-%{version}/README.redhat
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -p -m 644 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/lm_sensors
@@ -112,8 +120,7 @@ fi
 
 # for conversion of /etc/sysconfig/lm_sensors format change
 %triggerpostun -- lm_sensors <= 3.0.3
-%{_bindir}/sysconfig-lm_sensors-convert
-
+%{_bindir}/sysconfig-lm_sensors-convert 
 
 %pre
 if [ -f /var/lock/subsys/sensors ]; then
@@ -141,8 +148,8 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc CHANGES CONTRIBUTORS COPYING doc README*
-%doc prog/init/fancontrol.init prog/init/README.initscripts
+%dir %{_defaultdocdir}/%{name}-%{version}
+%doc %{_defaultdocdir}/%{name}-%{version}/*
 %config(noreplace) %{_sysconfdir}/sensors3.conf
 %{_bindir}/*
 %{_mandir}/man1/*
@@ -174,6 +181,26 @@ fi
 
 
 %changelog
+* Tue Sep 18 2012 Michal Minar <miminar@redhat.com> - 3.1.1-17
+- Related: #768365
+- Related: #623587
+- Solves spitting of "uninitialized values" messages occuring on ppc64
+  architectures.
+- Added generic detection of Intel CPUs for coretemp module to sensors-detect.
+
+* Fri Sep 07 2012 Michal Minar <miminar@redhat.com> - 3.1.1-16
+- Related: #610000
+- fixed requirements among packages
+- spelling corrections of summaries and description
+
+* Wed Sep 05 2012 Michal Minar <miminar@redhat.com> - 3.1.1-12
+- Resolves: #610000 - lm_sensors initscript confusion
+
+* Tue Sep 04 2012 Michal Minar <miminar@redhat.com> - 3.1.1-11
+- Resolves: #623587 - lm_sensors doesn't find/ load coretemp module automatically
+- Resolves: #768365 - sensors-detect reports error when run without user input
+- coretemp_detect function in sensors-detect updated
+
 * Tue Jul 27 2010 Nikola Pajkovsky <npajkovs@redhat.com> - 3.1.1-10
 - Resolves: #616760 - lm_sensors init script missing - regression from beta 1
 - revert "remove one of init scripts from /etc/init.d"
