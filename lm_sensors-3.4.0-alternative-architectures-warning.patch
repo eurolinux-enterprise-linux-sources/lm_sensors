@@ -1,0 +1,21 @@
+diff --git a/prog/detect/sensors-detect b/prog/detect/sensors-detect
+index 005bbd0..737be98 100755
+--- a/prog/detect/sensors-detect
++++ b/prog/detect/sensors-detect
+@@ -2877,7 +2877,15 @@ sub initialize_cpu_list
+ sub print_cpu_info
+ {
+ 	my $cpu = $cpu[0];
+-	print "# Processor: $cpu->{'model name'} ($cpu->{'cpu family'}/$cpu->{model}/$cpu->{stepping})\n";
++	if (!exists $cpu->{'model name'} ||  !exists $cpu->{'cpu family'} || !exists $cpu->{'model'}){
++	    print "**********\n";
++            print "Your processor's architecture is not yet supported. Beware that sensors-detect might not work properly!\n";
++	    print "**********\n";
++        }
++        else{
++	    print "# Processor: $cpu->{'model name'} ($cpu->{'cpu family'}/$cpu->{model}/$cpu->{stepping})\n";
++        }
++
+ }
+ 
+ # @i2c_adapters is a list of references to hashes, one hash per I2C/SMBus

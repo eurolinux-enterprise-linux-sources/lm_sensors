@@ -1,7 +1,17 @@
-diff -Naur lm_sensors-3.3.4.orig/prog/init/lm_sensors.service lm_sensors-3.3.4/prog/init/lm_sensors.service
---- lm_sensors-3.3.4.orig/prog/init/lm_sensors.service	2011-04-27 19:35:18.000000000 +0200
-+++ lm_sensors-3.3.4/prog/init/lm_sensors.service	2013-07-30 17:03:23.918671002 +0200
-@@ -6,9 +6,9 @@
+From 198101f07f8f70a471596b16788af69c43c41ddc Mon Sep 17 00:00:00 2001
+From: Martin Sehnoutka <msehnout@redhat.com>
+Date: Wed, 1 Jun 2016 12:54:13 +0200
+Subject: [PATCH] lm_sensors-3.3.4-lm_sensors-service-modprobe-warnings
+
+---
+ prog/init/lm_sensors.service | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/prog/init/lm_sensors.service b/prog/init/lm_sensors.service
+index 7d3bf80..fb56a91 100644
+--- a/prog/init/lm_sensors.service
++++ b/prog/init/lm_sensors.service
+@@ -5,9 +5,9 @@ Description=Initialize hardware monitoring sensors
  EnvironmentFile=/etc/sysconfig/lm_sensors
  Type=oneshot
  RemainAfterExit=yes
@@ -13,3 +23,6 @@ diff -Naur lm_sensors-3.3.4.orig/prog/init/lm_sensors.service lm_sensors-3.3.4/p
  
  [Install]
  WantedBy=multi-user.target
+-- 
+2.7.4
+

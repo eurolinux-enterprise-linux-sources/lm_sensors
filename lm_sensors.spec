@@ -1,27 +1,37 @@
+%global commit f9185e5c060ff22d2c8d4f6a19d317a529171c72
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global year 2016
+%global month 06
+%global day 01
+%global date %{year}%{month}%{day}
+
 Name: lm_sensors
-Version: 3.3.4
-Release: 11%{?dist}
+Version: 3.4.0
+Release: 4.%{date}git%{shortcommit}%{?dist}
 Summary: Hardware monitoring tools
 Group: Applications/System
 License: LGPLv2+ and GPLv3+ and GPLv2+ and Verbatim and Public domain
 
-URL: http://www.lm-sensors.org/
+#URL: http://www.lm-sensors.org/
+URL: http://github.com/groeck/lm-sensors/
 
-Source: http://dl.lm-sensors.org/lm-sensors/releases/%{name}-%{version}.tar.bz2
+# Official website seems to be dead. Using github temporarily.
+#Source: http://dl.lm-sensors.org/lm-sensors/releases/%{name}-%{version}.tar.bz2
+Source0: http://github.com/groeck/lm-sensors/archive/%{commit}/lm-sensors-%{commit}.tar.gz
 Source1: lm_sensors.sysconfig
 # these 2 were taken from PLD-linux, Thanks!
 Source2: sensord.sysconfig
 Source3: lm_sensors-modprobe
 Source4: lm_sensors-modprobe-r
 
-Patch0: lm_sensors-3.3.4-sensors-detect-null-input.patch
-Patch1: lm_sensors-3.3.4-lm_sensors-service-modprobe-warnings.patch
-Patch2: lm_sensors-3.3.4-man-sensors-conf-conv.patch
-Patch3: lm_sensors-3.3.4-sensors-detect-ppc-missing-vendor_id.patch
+Patch0: lm_sensors-3.3.4-lm_sensors-service-modprobe-warnings.patch
+Patch1: lm_sensors-3.4.0-fix-systemd-paths.patch
+Patch2: lm_sensors-3.4.0-alternative-architectures-warning.patch
 
 %ifarch %{ix86} x86_64
 Requires: /usr/sbin/dmidecode
 %endif
+Requires: %{name}-libs = %{version}-%{release}
 Requires(post): systemd-units
 BuildRequires: kernel-headers >= 2.2.16, bison, libsysfs-devel, flex, gawk
 BuildRequires: rrdtool-devel
@@ -60,16 +70,21 @@ database, and warns of sensor alarms.
 
 
 %prep
-%setup -q
+%setup -q -n lm-sensors-%{commit}
 
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
 
 mv prog/init/README prog/init/README.initscripts
 chmod -x prog/init/fancontrol.init
 
+# Exchange revision string in sensors-detect with version, release and date
+RELEASE=$(echo %{release} | sed "s/\..*$//" )
+sed -i "s/\$Revision\$ (\$Date\$)/%{version}-$RELEASE (%{year}-%{month}-%{day})/" \
+    prog/detect/sensors-detect
+# Remove string formatting, because new string is already formatted
+sed -i 's/^\$revision =~ .*$//' prog/detect/sensors-detect
 
 %build
 export CFLAGS="%{optflags} -fPIC"
@@ -171,6 +186,22 @@ fi
 
 
 %changelog
+* Tue Aug 23 2016 Martin Sehnoutka <msehnout@redhat.com> - 3.4.0-4.20160601gitf9185e5
+- Print warning message when running on an alternative architecture. 
+- Resolves: #1362664
+
+* Mon Aug 22 2016 Martin Sehnoutka <msehnout@redhat.com> - 3.4.0-3.20160601gitf9185e5
+- Replace Revision string with release and date. Resolves: #1362658
+
+* Wed Jun 15 2016 Martin Sehnoutka <msehnout@redhat.com> - 3.4.0-2.20160601gitf9185e5
+- Add explicit package version requirement.
+
+* Wed Jun 01 2016 Martin Sehnoutka <msehnout@redhat.com> - 3.4.0-0.20160601gitf9185e5.1
+- New upstream release
+- Drop patches that are already present in upstream
+- Apply upstream fix for systemd paths
+- Resolves: #1297795
+
 * Wed Oct 01 2014 Jaromir Capik <jcapik@redhat.com> - 3.3.4-11
 - Hardening the build (#1092536)
 - Resolves: rhbz#1092536

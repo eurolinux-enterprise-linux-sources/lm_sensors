@@ -745,10 +745,10 @@ chip "lm80-*"
 # All 4 of these limits apply to the single temperature sensor.
 # "crit" may or may not do anything on your motherboard but it should
 #  be set higher than the "max" thresholds.
-#    set temp1_max_hyst   45
 #    set temp1_max        52
-#    set temp1_crit_hyst  57
+#    set temp1_max_hyst   45
 #    set temp1_crit       62
+#    set temp1_crit_hyst  57
 
 
 chip "via686a-*"
@@ -822,12 +822,12 @@ chip "via686a-*"
 # we would still get some oscillation when the temp hovers around the limit
 # due to noise.)
 
-#    set temp1_max_hyst 40
 #    set temp1_max      45
-#    set temp2_max_hyst 55
+#    set temp1_max_hyst 40
 #    set temp2_max      60
-#    set temp3_max_hyst 60
+#    set temp2_max_hyst 55
 #    set temp3_max      65
+#    set temp3_max_hyst 60
 
 # You could set your fan limits too, but the defaults should be fine.
 
@@ -1452,14 +1452,14 @@ chip "vt1211-*"
     compute temp7  1 / (1 / 298.15 - (` (2.2 / @ - 1)) / 3435) - 273.15, \
                    2.2 / (1 + (^ (3435 / 298.15 - 3435 / (273.15 + @))))
 
-#    set temp1_max_hyst 80
 #    set temp1_max      85
-#    set temp2_max_hyst 60
+#    set temp1_max_hyst 80
 #    set temp2_max      65
-#    set temp3_max_hyst 60
+#    set temp2_max_hyst 60
 #    set temp3_max      65
-#    set temp4_max_hyst 40
+#    set temp3_max_hyst 60
 #    set temp4_max      45
+#    set temp4_max_hyst 40
 
 #    set fan1_min 3000
 #    set fan2_min 3000
@@ -1520,10 +1520,10 @@ chip "vt8231-*"
     compute temp3  1 / (1 / 298.15 - (` (2.2 / @ - 1)) / 3435) - 273.15, \
                    2.2 / (1 + (^ (3435 / 298.15 - 3435 / (273.15 + @))))
 
-#    set temp1_max_hyst 60
 #    set temp1_max      65
-#    set temp2_max_hyst 40
+#    set temp1_max_hyst 60
 #    set temp2_max      45
+#    set temp2_max_hyst 40
 
 #    set fan1_min 3000
 #    set fan2_min 3000
@@ -1980,9 +1980,9 @@ chip "f71805f-*" "f71872f-*"
 
 
 # Abit Uguru sensor part configuration.
-# The Abit Uguru is relativly straight forward to configure.
+# The Abit Uguru is relatively straight forward to configure.
 # label statements:
-# The voltage (in) temp and fan sensors are usualy in the same order as listed
+# The voltage (in) temp and fan sensors are usually in the same order as listed
 # in the BIOS, but not always!
 # compute statements:
 # The temp and fan sensors don't need any compute statements. Most voltage
@@ -1994,7 +1994,7 @@ chip "f71805f-*" "f71872f-*"
 # mutiplier, 5 volt the 1.788 and 12 volt the 4.153.
 # set statements:
 # The Abit BIOS sets reasonable treshholds and allows changing them, thus
-# set statements may be ommited. The abituguru kernel driver does support
+# set statements may be omitted. The abituguru kernel driver does support
 # them if you want to add them.
 #
 # The configuration below is for the Kv8Pro and AV8 this is the default as this
