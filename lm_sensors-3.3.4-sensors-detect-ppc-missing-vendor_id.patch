@@ -1,0 +1,11 @@
+diff -Naur lm_sensors-3.3.4.orig/prog/detect/sensors-detect lm_sensors-3.3.4/prog/detect/sensors-detect
+--- lm_sensors-3.3.4.orig/prog/detect/sensors-detect	2013-08-07 09:46:59.000000000 -0400
++++ lm_sensors-3.3.4/prog/detect/sensors-detect	2013-09-09 13:59:09.753266033 -0400
+@@ -2657,6 +2657,7 @@
+ 		if (m/^processor\s*:\s*(\d+)/) {
+ 			push @cpu, $entry if scalar keys(%{$entry}); # Previous entry
+ 			$entry = { nr => $1 }; # New entry
++			$entry->{vendor_id} = "undefined";
+ 			next;
+ 		}
+ 		if (m/^(vendor_id|cpu family|model|model name|stepping|cpuid level)\s*:\s*(.+)$/) {

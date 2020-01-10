@@ -1,0 +1,15 @@
+diff -Naur lm_sensors-3.3.4.orig/prog/init/lm_sensors.service lm_sensors-3.3.4/prog/init/lm_sensors.service
+--- lm_sensors-3.3.4.orig/prog/init/lm_sensors.service	2011-04-27 19:35:18.000000000 +0200
++++ lm_sensors-3.3.4/prog/init/lm_sensors.service	2013-07-30 17:03:23.918671002 +0200
+@@ -6,9 +6,9 @@
+ EnvironmentFile=/etc/sysconfig/lm_sensors
+ Type=oneshot
+ RemainAfterExit=yes
+-ExecStart=-/sbin/modprobe -qab $BUS_MODULES $HWMON_MODULES
++ExecStart=-/usr/libexec/lm_sensors/modprobe $BUS_MODULES $HWMON_MODULES
+ ExecStart=/usr/bin/sensors -s
+-ExecStop=-/sbin/modprobe -qabr $BUS_MODULES $HWMON_MODULES
++ExecStop=-/usr/libexec/lm_sensors/modprobe-r $BUS_MODULES $HWMON_MODULES
+ 
+ [Install]
+ WantedBy=multi-user.target
