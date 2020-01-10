@@ -1,6 +1,6 @@
 Name: lm_sensors
 Version: 3.3.4
-Release: 10%{?dist}
+Release: 11%{?dist}
 Summary: Hardware monitoring tools
 Group: Applications/System
 License: LGPLv2+ and GPLv3+ and GPLv2+ and Verbatim and Public domain
@@ -72,9 +72,9 @@ chmod -x prog/init/fancontrol.init
 
 
 %build
-export CFLAGS="%{optflags}"
-make PREFIX=%{_prefix} LIBDIR=%{_libdir} MANDIR=%{_mandir} EXLDFLAGS= \
-  PROG_EXTRA=sensord user
+export CFLAGS="%{optflags} -fPIC"
+make PREFIX=%{_prefix} LIBDIR=%{_libdir} MANDIR=%{_mandir} \
+     EXLDFLAGS="-pie -Wl,-z,relro,-z,now" PROG_EXTRA=sensord user
 
 
 %install
@@ -171,6 +171,10 @@ fi
 
 
 %changelog
+* Wed Oct 01 2014 Jaromir Capik <jcapik@redhat.com> - 3.3.4-11
+- Hardening the build (#1092536)
+- Resolves: rhbz#1092536
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 3.3.4-10
 - Mass rebuild 2014-01-24
 
