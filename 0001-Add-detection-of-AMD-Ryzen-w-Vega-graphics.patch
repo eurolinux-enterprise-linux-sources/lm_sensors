@@ -1,0 +1,27 @@
+From c874e11639b6fd4002b155f7414f54f632465ec1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ond=C5=99ej=20Lyson=C4=9Bk?= <olysonek@redhat.com>
+Date: Thu, 3 May 2018 12:41:41 +0200
+Subject: [PATCH] Add detection of AMD Ryzen w/ Vega graphics
+
+Kernel support was added in commit
+https://github.com/torvalds/linux/commit/877d8948d0aa402fb
+---
+ prog/detect/sensors-detect | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/prog/detect/sensors-detect b/prog/detect/sensors-detect
+index 9b399e74..0d1cbb5d 100755
+--- a/prog/detect/sensors-detect
++++ b/prog/detect/sensors-detect
+@@ -2773,7 +2773,7 @@ use vars qw(@cpu_ids);
+ 	}, {
+ 		name => "AMD Family 17h thermal sensors",
+ 		driver => "k10temp",
+-		detect => sub { amd_pci_detect('1463') },
++		detect => sub { amd_pci_detect('1463', '15d0') },
+ 	}, {
+ 		name => "AMD Family 15h power sensors",
+ 		driver => "fam15h_power",
+-- 
+2.14.3
+

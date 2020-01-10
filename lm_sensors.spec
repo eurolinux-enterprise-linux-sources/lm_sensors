@@ -7,10 +7,10 @@
 
 Name: lm_sensors
 Version: 3.4.0
-Release: 4.%{date}git%{shortcommit}%{?dist}
+Release: 6.%{date}git%{shortcommit}%{?dist}
 Summary: Hardware monitoring tools
 Group: Applications/System
-License: LGPLv2+ and GPLv3+ and GPLv2+ and Verbatim and Public domain
+License: LGPLv2+ and GPLv3+ and GPLv2+ and Verbatim and Public Domain
 
 #URL: http://www.lm-sensors.org/
 URL: http://github.com/groeck/lm-sensors/
@@ -27,6 +27,14 @@ Source4: lm_sensors-modprobe-r
 Patch0: lm_sensors-3.3.4-lm_sensors-service-modprobe-warnings.patch
 Patch1: lm_sensors-3.4.0-fix-systemd-paths.patch
 Patch2: lm_sensors-3.4.0-alternative-architectures-warning.patch
+# Upstream patch:
+Patch3: 0001-Detect-AMD-Family-17h-thermal-sensors.patch
+# Upstream patch:
+Patch4: 0001-Add-detection-of-AMD-Ryzen-w-Vega-graphics.patch
+# Upstream patch:
+Patch5: 0001-Fix-a-use-after-free.patch
+# Upstream patch:
+Patch6: 0001-Remove-superfluous-call-to-get_input_value.patch
 
 %ifarch %{ix86} x86_64
 Requires: /usr/sbin/dmidecode
@@ -75,6 +83,10 @@ database, and warns of sensor alarms.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
 
 mv prog/init/README prog/init/README.initscripts
 chmod -x prog/init/fancontrol.init
@@ -186,6 +198,18 @@ fi
 
 
 %changelog
+* Mon Apr 23 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.4.0-6.20160601gitf9185e5
+- Fix License field capitalization
+- Resolves: rhbz#1577175
+- Add detection of AMD Ryzen w/ Vega graphics
+- Resolves: rhbz#1569542
+- Fix issues found by Coverity Scan
+- Resolves: rhbz#1578007
+
+* Fri Apr 20 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.4.0-5.20160601gitf9185e5
+- Detect AMD Family 17h thermal sensors
+- Resolves: rhbz#1569542
+
 * Tue Aug 23 2016 Martin Sehnoutka <msehnout@redhat.com> - 3.4.0-4.20160601gitf9185e5
 - Print warning message when running on an alternative architecture. 
 - Resolves: #1362664

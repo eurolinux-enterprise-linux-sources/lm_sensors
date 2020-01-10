@@ -1,0 +1,27 @@
+From f7d7997cf41bb0e1db0fb300073b434e0ea7dcc3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ond=C5=99ej=20Lyson=C4=9Bk?= <olysonek@redhat.com>
+Date: Fri, 20 Apr 2018 16:24:24 +0200
+Subject: [PATCH] Detect AMD Family 17h thermal sensors
+
+---
+ prog/detect/sensors-detect | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/prog/detect/sensors-detect b/prog/detect/sensors-detect
+index 6013aa3..f522b95 100755
+--- a/prog/detect/sensors-detect
++++ b/prog/detect/sensors-detect
+@@ -2532,6 +2532,10 @@ use vars qw(@cpu_ids);
+ 		name => "AMD Family 16h thermal sensors",
+ 		driver => "k10temp",
+ 		detect => sub { amd_pci_detect('1533', '1583') },
++	}, {
++		name => "AMD Family 17h thermal sensors",
++		driver => "k10temp",
++		detect => sub { amd_pci_detect('1463') },
+ 	}, {
+ 		name => "AMD Family 15h power sensors",
+ 		driver => "fam15h_power",
+-- 
+2.14.3
+

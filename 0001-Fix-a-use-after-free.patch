@@ -1,0 +1,38 @@
+From 3b548b74aeaefb41ac9eca1f2e82ae693b469345 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ond=C5=99ej=20Lyson=C4=9Bk?= <olysonek@redhat.com>
+Date: Thu, 3 May 2018 17:28:52 +0200
+Subject: [PATCH] Fix a use after free()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The issue was reported by Coverity Scan.
+
+Signed-off-by: Ondřej Lysoněk <olysonek@redhat.com>
+---
+ prog/sensors/chips.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/prog/sensors/chips.c b/prog/sensors/chips.c
+index 668f508f..01c08fa8 100644
+--- a/prog/sensors/chips.c
++++ b/prog/sensors/chips.c
+@@ -48,7 +48,6 @@ void print_chip_raw(const sensors_chip_name *name)
+ 			continue;
+ 		}
+ 		printf("%s:\n", label);
+-		free(label);
+ 
+ 		b = 0;
+ 		while ((sub = sensors_get_all_subfeatures(name, feature, &b))) {
+@@ -64,6 +63,7 @@ void print_chip_raw(const sensors_chip_name *name)
+ 			} else
+ 				printf("(%s)\n", label);
+ 		}
++		free(label);
+ 	}
+ }
+ 
+-- 
+2.14.3
+
