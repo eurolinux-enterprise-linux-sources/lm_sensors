@@ -1,0 +1,31 @@
+From 1c41bbaea791b81382afe9a1c339df6b8aca9e00 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ond=C5=99ej=20Lyson=C4=9Bk?= <olysonek@redhat.com>
+Date: Thu, 10 Jan 2019 15:09:24 +0100
+Subject: [PATCH] sensors-detect: Add detection of AMD Family 17h model 30h
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Kernel support was added in mainline commit 210ba1201ff95.
+
+Signed-off-by: Ondřej Lysoněk <olysonek@redhat.com>
+---
+ prog/detect/sensors-detect | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/prog/detect/sensors-detect b/prog/detect/sensors-detect
+index 206eb82..0151efc 100755
+--- a/prog/detect/sensors-detect
++++ b/prog/detect/sensors-detect
+@@ -2535,7 +2535,7 @@ use vars qw(@cpu_ids);
+ 	}, {
+ 		name => "AMD Family 17h thermal sensors",
+ 		driver => "k10temp",
+-		detect => sub { amd_pci_detect('1463', '15d0') },
++		detect => sub { amd_pci_detect('1463', '15d0', '1493') },
+ 	}, {
+ 		name => "AMD Family 15h power sensors",
+ 		driver => "fam15h_power",
+-- 
+2.17.2
+
